@@ -7,7 +7,6 @@ let shapes = [];
 createBaseShape = (x, y) => {
   if (x == undefined) x = 0;
   if (y == undefined) y = 0;
-  console.log(x)
   return {
     shape : [
       [0, 0, 0, 0],
@@ -25,7 +24,6 @@ createBaseShape = (x, y) => {
 createShape = (x, y) => {
   if (x == undefined) x = 0;
   if (y == undefined) y = 0;
-  console.log(x)
   let shape = createBaseShape(x, y);
   shape.color[0] *= random();
   shape.color[1] *= random();
@@ -79,6 +77,39 @@ function placeShapes(){
   shapes.map((shape) => placeShape(shape));
 }
 
+function checkLines(){
+  lines = Array(gridHeight).fill(false);
+  checkLineFunc = () => grid.map((line, index) => lines[index] = (!line.some((cell) => cell.state == 1)));
+  checkLineFunc();
+  while (lines.some((line) => line)){
+    handleLineClear(lines.findIndex(true));
+    checkLineFunc();
+  }
+}
+
+function getShapesOnLine(line){
+  return shapes.filter((shape) => {
+    for (let i = 0; i < 4; i++){
+      for (let j = 0; j < 4; j++){
+        return (shape.shape[i][j] == 1 && j+shape.y == line);
+      }
+    }
+  });
+}
+
+function getShapesAboutLine(line){
+  //TODO implement
+}
+
+function handleLineClear(line){
+  lineShapes = getShapesOnLine(line);
+  //TODO implement
+}
+
+function rotateShape(shape, dir){
+  //TODO implement
+}
+
 function collides(shape){
   for (let i = 0; i < 4; i++){
     for (let j = 0; j < 4; j++){
@@ -88,35 +119,41 @@ function collides(shape){
         }
         continue;
       };
-      shapes.map((shape1) => {
+      check = shapes.map((shape1) => {
+        if (shape == shape1) return false;
         for (let i1 = 0; i1 < 4; i1++){
           for (let j1 = 0; j1 < 4; j1++){
             if (shape1.y+j1<0 || shape1.y+j1>=gridHeight || shape1.x+i1<0 || shape1.x+i1>=gridWidth){
-              if (shape1.shape[i1][j1] == 1){
-                return true;
-              }
               continue;
             };
-            if (shape.shape[i][j] == 1 && shape1.shape[i1][j1] == 1) return true;
+            if (shape.shape[i][j] == 1 && shape1.shape[i1][j1] == 1 && shape.x+i==shape1.x+i1 && shape.y+j==shape1.y+j1){
+              return true;
+            }
           }
         }
-      });
+        return false;
+      })
+      //console.log(check)
+      if (check.includes(true)) return true;
     }
   }
   return false;
 }
 
 function moveShapes(){
-  shapes.map((shape) => {
+  canMove = shapes.map((shape) => {
     if (shape.canMove){
       shape.y++;
       if (collides(shape)){
-        console.log("collides");
         shape.y--;
         shape.canMove = false;
       }
     }
+    return shape.canMove;
   });
+  if (!canMove.includes(true)){
+    shapes.push(createShape(floor(random(0, 19)), floor(random(0, 19))));
+  }
 }
 
 function setup() {
@@ -125,7 +162,7 @@ function setup() {
   grid = createGrid(gridWidth, gridHeight);
   shapes = Array(2).fill(0).map(()=>createShape(floor(random(0, 19)), floor(random(0, 19))));
   placeShapes();
-  frameRate(5);
+  //frameRate(15);
 }
 
 function draw() {
